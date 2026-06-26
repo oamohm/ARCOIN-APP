@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+out/
+.turbo/
+*.tsbuildinfo
+
+# Environment secrets — NEVER commit these
+.env
+.env.local
+.env.*.local
+*.env
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Replit internals
+.cache/
+.local/
+.replit
+replit.nix
+.upm/
+.breakpoints
+
+# Generated/temp
+ARCOIN-source.tar.gz
+/tmp/
+
+# IDE
+.vscode/
+.idea/
