@@ -1,0 +1,1435 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: ARCOIN Web3 Financial Super-App API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: wallet
+    description: Wallet and balance operations
+  - name: transactions
+    description: Transaction operations
+  - name: streaming
+    description: Bulk streaming payouts
+  - name: treasury
+    description: Treasury management
+  - name: governance
+    description: Governance and multisig
+  - name: arcflow
+    description: Invoice financing marketplace
+  - name: ai
+    description: AI financial assistant
+  - name: vault
+    description: Savings vault
+  - name: points
+    description: ARCOIN points and rewards
+  - name: admin
+    description: Admin and analytics
+  - name: compliance
+    description: KYC/AML compliance
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # AUTH
+  /auth/email/otp/send:
+    post:
+      operationId: sendEmailOtp
+      tags: [auth]
+      summary: Send OTP to email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailOtpRequest"
+      responses:
+        "200":
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/email/otp/verify:
+    post:
+      operationId: verifyEmailOtp
+      tags: [auth]
+      summary: Verify email OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpVerifyInput"
+      responses:
+        "200":
+          description: OTP verified, session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+
+  /auth/wallet/login:
+    post:
+      operationId: walletLogin
+      tags: [auth]
+      summary: Login with wallet signature
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WalletLoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout current session
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # WALLET
+  /wallet/balance:
+    get:
+      operationId: getWalletBalance
+      tags: [wallet]
+      summary: Get unified multi-chain wallet balance
+      responses:
+        "200":
+          description: Balance summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletBalance"
+
+  /wallet/send:
+    post:
+      operationId: sendPayment
+      tags: [wallet]
+      summary: Send USDC payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendPaymentInput"
+      responses:
+        "200":
+          description: Payment initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionReceipt"
+
+  /wallet/swap:
+    post:
+      operationId: swapCurrency
+      tags: [wallet]
+      summary: Swap USDC to other currencies (EURC, JPYC, BRLA)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SwapInput"
+      responses:
+        "200":
+          description: Swap initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionReceipt"
+
+  /wallet/bridge:
+    post:
+      operationId: bridgeAssets
+      tags: [wallet]
+      summary: Bridge USDC across chains via CCTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BridgeInput"
+      responses:
+        "200":
+          description: Bridge initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionReceipt"
+
+  /wallet/receive-address:
+    get:
+      operationId: getReceiveAddress
+      tags: [wallet]
+      summary: Get receive address QR code data
+      responses:
+        "200":
+          description: Receive address
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiveAddress"
+
+  # TRANSACTIONS
+  /transactions:
+    get:
+      operationId: listTransactions
+      tags: [transactions]
+      summary: List transaction history
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer }
+        - name: limit
+          in: query
+          schema: { type: integer }
+        - name: type
+          in: query
+          schema: { type: string }
+        - name: chain
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Transactions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionList"
+
+  /transactions/summary:
+    get:
+      operationId: getTransactionSummary
+      tags: [transactions]
+      summary: Dashboard summary stats
+      responses:
+        "200":
+          description: Summary stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionSummary"
+
+  /transactions/{txHash}:
+    get:
+      operationId: getTransaction
+      tags: [transactions]
+      summary: Get single transaction
+      parameters:
+        - name: txHash
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Transaction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+  # STREAMING
+  /streaming/jobs:
+    get:
+      operationId: listStreamingJobs
+      tags: [streaming]
+      summary: List bulk streaming jobs
+      responses:
+        "200":
+          description: Streaming jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StreamingJob"
+    post:
+      operationId: createStreamingJob
+      tags: [streaming]
+      summary: Create bulk streaming job (CSV upload)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StreamingJobInput"
+      responses:
+        "201":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamingJob"
+
+  /streaming/jobs/{jobId}:
+    get:
+      operationId: getStreamingJob
+      tags: [streaming]
+      summary: Get streaming job details
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamingJob"
+
+  /streaming/jobs/{jobId}/pause:
+    post:
+      operationId: pauseStreamingJob
+      tags: [streaming]
+      summary: Pause a streaming job
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Paused
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamingJob"
+
+  /streaming/jobs/{jobId}/resume:
+    post:
+      operationId: resumeStreamingJob
+      tags: [streaming]
+      summary: Resume a streaming job
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Resumed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamingJob"
+
+  /streaming/jobs/{jobId}/stop:
+    post:
+      operationId: stopStreamingJob
+      tags: [streaming]
+      summary: Stop a streaming job
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamingJob"
+
+  # TREASURY
+  /treasury/overview:
+    get:
+      operationId: getTreasuryOverview
+      tags: [treasury]
+      summary: Multi-chain treasury overview
+      responses:
+        "200":
+          description: Treasury overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TreasuryOverview"
+
+  /treasury/departments:
+    get:
+      operationId: listDepartmentSpending
+      tags: [treasury]
+      summary: Department-wise spending breakdown
+      responses:
+        "200":
+          description: Department spending
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DepartmentSpend"
+
+  /treasury/audit-log:
+    get:
+      operationId: getAuditLog
+      tags: [treasury]
+      summary: Treasury audit log
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogList"
+
+  /treasury/report:
+    get:
+      operationId: generateTreasuryReport
+      tags: [treasury]
+      summary: Generate CSV/PDF treasury report
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [csv, pdf]
+        - name: from
+          in: query
+          schema: { type: string }
+        - name: to
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Report data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportData"
+
+  # GOVERNANCE
+  /governance/proposals:
+    get:
+      operationId: listProposals
+      tags: [governance]
+      summary: List governance proposals
+      responses:
+        "200":
+          description: Proposals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Proposal"
+    post:
+      operationId: createProposal
+      tags: [governance]
+      summary: Create governance proposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalInput"
+      responses:
+        "201":
+          description: Proposal created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /governance/proposals/{proposalId}/vote:
+    post:
+      operationId: castVote
+      tags: [governance]
+      summary: Cast vote on a proposal
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoteInput"
+      responses:
+        "200":
+          description: Vote cast
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /governance/multisig/transactions:
+    get:
+      operationId: listMultisigTransactions
+      tags: [governance]
+      summary: List multisig pending transactions
+      responses:
+        "200":
+          description: Multisig transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MultisigTx"
+    post:
+      operationId: createMultisigTx
+      tags: [governance]
+      summary: Create multisig transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MultisigTxInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MultisigTx"
+
+  /governance/multisig/transactions/{txId}/sign:
+    post:
+      operationId: signMultisigTx
+      tags: [governance]
+      summary: Sign a multisig transaction
+      parameters:
+        - name: txId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Signed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MultisigTx"
+
+  # ARC-FLOW (Invoice Financing)
+  /arcflow/invoices:
+    get:
+      operationId: listInvoices
+      tags: [arcflow]
+      summary: List invoices
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Invoice"
+    post:
+      operationId: createInvoice
+      tags: [arcflow]
+      summary: Create invoice (minted as NFT)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvoiceInput"
+      responses:
+        "201":
+          description: Invoice created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+
+  /arcflow/marketplace:
+    get:
+      operationId: listMarketplaceInvoices
+      tags: [arcflow]
+      summary: List invoices available for investment
+      responses:
+        "200":
+          description: Marketplace invoices
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketplaceList"
+
+  /arcflow/marketplace/{invoiceId}/fund:
+    post:
+      operationId: fundInvoice
+      tags: [arcflow]
+      summary: Fund/invest in an invoice NFT
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FundInvoiceInput"
+      responses:
+        "200":
+          description: Invoice funded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+
+  /arcflow/investor/dashboard:
+    get:
+      operationId: getInvestorDashboard
+      tags: [arcflow]
+      summary: Investor dashboard with portfolio and returns
+      responses:
+        "200":
+          description: Investor dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvestorDashboard"
+
+  # AI ASSISTANT
+  /ai/chat:
+    post:
+      operationId: chatWithAI
+      tags: [ai]
+      summary: Chat with AI financial assistant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AIChatInput"
+      responses:
+        "200":
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIChatResponse"
+
+  /ai/insights:
+    get:
+      operationId: getAIInsights
+      tags: [ai]
+      summary: Get AI-generated financial insights
+      responses:
+        "200":
+          description: AI insights
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIInsights"
+
+  /ai/agent/setup:
+    post:
+      operationId: setupAutonomousAgent
+      tags: [ai]
+      summary: Setup autonomous financial agent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentSetupInput"
+      responses:
+        "200":
+          description: Agent configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutonomousAgent"
+
+  /ai/agent:
+    get:
+      operationId: getAutonomousAgent
+      tags: [ai]
+      summary: Get autonomous agent status
+      responses:
+        "200":
+          description: Agent status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutonomousAgent"
+
+  # VAULT
+  /vault/goals:
+    get:
+      operationId: listVaultGoals
+      tags: [vault]
+      summary: List savings goals
+      responses:
+        "200":
+          description: Vault goals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VaultGoal"
+    post:
+      operationId: createVaultGoal
+      tags: [vault]
+      summary: Create savings goal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VaultGoalInput"
+      responses:
+        "201":
+          description: Goal created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultGoal"
+
+  /vault/deposit:
+    post:
+      operationId: vaultDeposit
+      tags: [vault]
+      summary: Deposit to vault goal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VaultDepositInput"
+      responses:
+        "200":
+          description: Deposited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultGoal"
+
+  # POINTS
+  /points/balance:
+    get:
+      operationId: getPointsBalance
+      tags: [points]
+      summary: Get ARCOIN points balance and tier
+      responses:
+        "200":
+          description: Points balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PointsBalance"
+
+  /points/history:
+    get:
+      operationId: getPointsHistory
+      tags: [points]
+      summary: Points earning history
+      responses:
+        "200":
+          description: Points history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PointsEvent"
+
+  /points/redeem:
+    post:
+      operationId: redeemPoints
+      tags: [points]
+      summary: Redeem points for rewards
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RedeemPointsInput"
+      responses:
+        "200":
+          description: Points redeemed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PointsBalance"
+
+  # ADMIN
+  /admin/analytics:
+    get:
+      operationId: getAdminAnalytics
+      tags: [admin]
+      summary: Live user and transaction analytics
+      responses:
+        "200":
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAnalytics"
+
+  /admin/owner-wallet:
+    get:
+      operationId: getOwnerWallet
+      tags: [admin]
+      summary: Get owner wallet config and earnings
+      responses:
+        "200":
+          description: Owner wallet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnerWallet"
+    patch:
+      operationId: updateOwnerWallet
+      tags: [admin]
+      summary: Update owner wallet address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OwnerWalletUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnerWallet"
+
+  # COMPLIANCE
+  /compliance/check:
+    post:
+      operationId: runComplianceCheck
+      tags: [compliance]
+      summary: Run AML/KYC check on address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComplianceCheckInput"
+      responses:
+        "200":
+          description: Compliance result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplianceResult"
+
+  /compliance/kyc/status:
+    get:
+      operationId: getKycStatus
+      tags: [compliance]
+      summary: Get KYC verification status for current user
+      responses:
+        "200":
+          description: KYC status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KycStatus"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status: { type: string }
+      required: [status]
+
+    MessageResponse:
+      type: object
+      properties:
+        message: { type: string }
+        success: { type: boolean }
+      required: [message, success]
+
+    # AUTH
+    EmailOtpRequest:
+      type: object
+      properties:
+        email: { type: string, format: email }
+      required: [email]
+
+    OtpVerifyInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        otp: { type: string }
+        walletAddress: { type: ["string", "null"] }
+      required: [email, otp]
+
+    WalletLoginInput:
+      type: object
+      properties:
+        walletAddress: { type: string }
+        signature: { type: string }
+        message: { type: string }
+        chainId: { type: integer }
+      required: [walletAddress, signature, message, chainId]
+
+    AuthSession:
+      type: object
+      properties:
+        userId: { type: string }
+        email: { type: ["string", "null"] }
+        walletAddress: { type: ["string", "null"] }
+        loginMethod: { type: string, enum: [wallet, email] }
+        token: { type: string }
+      required: [userId, loginMethod, token]
+
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: ["string", "null"] }
+        walletAddress: { type: ["string", "null"] }
+        loginMethod: { type: string }
+        tier: { type: string }
+        kycStatus: { type: string }
+        createdAt: { type: string }
+        arcoinPoints: { type: integer }
+      required: [id, loginMethod, tier, kycStatus, createdAt, arcoinPoints]
+
+    # WALLET
+    ChainBalance:
+      type: object
+      properties:
+        chain: { type: string }
+        chainId: { type: integer }
+        usdc: { type: number }
+        nativeToken: { type: number }
+        nativeSymbol: { type: string }
+        usdValue: { type: number }
+      required: [chain, chainId, usdc, nativeToken, nativeSymbol, usdValue]
+
+    WalletBalance:
+      type: object
+      properties:
+        walletAddress: { type: string }
+        totalUsdcBalance: { type: number }
+        totalUsdValue: { type: number }
+        chains: { type: array, items: { $ref: "#/components/schemas/ChainBalance" } }
+        currencies: { type: object }
+      required: [walletAddress, totalUsdcBalance, totalUsdValue, chains, currencies]
+
+    SendPaymentInput:
+      type: object
+      properties:
+        toAddress: { type: string }
+        amount: { type: number }
+        currency: { type: string }
+        chain: { type: string }
+        memo: { type: ["string", "null"] }
+        requireOtp: { type: boolean }
+        otp: { type: ["string", "null"] }
+      required: [toAddress, amount, currency, chain]
+
+    SwapInput:
+      type: object
+      properties:
+        fromCurrency: { type: string }
+        toCurrency: { type: string }
+        amount: { type: number }
+      required: [fromCurrency, toCurrency, amount]
+
+    BridgeInput:
+      type: object
+      properties:
+        fromChain: { type: string }
+        toChain: { type: string }
+        amount: { type: number }
+        destinationAddress: { type: string }
+      required: [fromChain, toChain, amount, destinationAddress]
+
+    ReceiveAddress:
+      type: object
+      properties:
+        address: { type: string }
+        chain: { type: string }
+        qrData: { type: string }
+      required: [address, chain, qrData]
+
+    TransactionReceipt:
+      type: object
+      properties:
+        txHash: { type: string }
+        status: { type: string }
+        amount: { type: number }
+        currency: { type: string }
+        chain: { type: string }
+        explorerUrl: { type: string }
+        estimatedTime: { type: string }
+      required: [txHash, status, amount, currency, chain, explorerUrl]
+
+    # TRANSACTIONS
+    Transaction:
+      type: object
+      properties:
+        id: { type: string }
+        txHash: { type: string }
+        type: { type: string, enum: [send, receive, swap, bridge, streaming, vault, invoice] }
+        status: { type: string, enum: [pending, confirmed, failed] }
+        amount: { type: number }
+        currency: { type: string }
+        chain: { type: string }
+        fromAddress: { type: string }
+        toAddress: { type: string }
+        memo: { type: ["string", "null"] }
+        fee: { type: number }
+        timestamp: { type: string }
+        explorerUrl: { type: string }
+        emailVerified: { type: boolean }
+      required: [id, txHash, type, status, amount, currency, chain, fromAddress, toAddress, fee, timestamp, explorerUrl, emailVerified]
+
+    TransactionList:
+      type: object
+      properties:
+        transactions: { type: array, items: { $ref: "#/components/schemas/Transaction" } }
+        total: { type: integer }
+        page: { type: integer }
+        limit: { type: integer }
+      required: [transactions, total, page, limit]
+
+    TransactionSummary:
+      type: object
+      properties:
+        totalSent: { type: number }
+        totalReceived: { type: number }
+        totalFees: { type: number }
+        txCount: { type: integer }
+        activeStreams: { type: integer }
+        pendingInvoices: { type: integer }
+        monthlyVolume: { type: array, items: { type: object } }
+      required: [totalSent, totalReceived, totalFees, txCount, activeStreams, pendingInvoices, monthlyVolume]
+
+    # STREAMING
+    StreamingJob:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        status: { type: string, enum: [pending, active, paused, completed, stopped] }
+        totalRecipients: { type: integer }
+        completedCount: { type: integer }
+        failedCount: { type: integer }
+        totalAmount: { type: number }
+        disbursedAmount: { type: number }
+        currency: { type: string }
+        chain: { type: string }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+        recipients: { type: array, items: { type: object } }
+      required: [id, name, status, totalRecipients, completedCount, failedCount, totalAmount, disbursedAmount, currency, chain, createdAt, updatedAt]
+
+    StreamingJobInput:
+      type: object
+      properties:
+        name: { type: string }
+        currency: { type: string }
+        chain: { type: string }
+        recipients: { type: array, items: { type: object } }
+      required: [name, currency, chain, recipients]
+
+    # TREASURY
+    TreasuryOverview:
+      type: object
+      properties:
+        totalBalance: { type: number }
+        chains: { type: array, items: { $ref: "#/components/schemas/ChainBalance" } }
+        monthlyInflow: { type: number }
+        monthlyOutflow: { type: number }
+        netChange: { type: number }
+        last30DaysTrend: { type: array, items: { type: object } }
+      required: [totalBalance, chains, monthlyInflow, monthlyOutflow, netChange, last30DaysTrend]
+
+    DepartmentSpend:
+      type: object
+      properties:
+        department: { type: string }
+        amount: { type: number }
+        percentage: { type: number }
+        currency: { type: string }
+      required: [department, amount, percentage, currency]
+
+    AuditLogEntry:
+      type: object
+      properties:
+        id: { type: string }
+        action: { type: string }
+        actor: { type: string }
+        details: { type: string }
+        txHash: { type: ["string", "null"] }
+        timestamp: { type: string }
+        chain: { type: ["string", "null"] }
+      required: [id, action, actor, details, timestamp]
+
+    AuditLogList:
+      type: object
+      properties:
+        entries: { type: array, items: { $ref: "#/components/schemas/AuditLogEntry" } }
+        total: { type: integer }
+        page: { type: integer }
+      required: [entries, total, page]
+
+    ReportData:
+      type: object
+      properties:
+        format: { type: string }
+        downloadUrl: { type: string }
+        generatedAt: { type: string }
+        rows: { type: integer }
+      required: [format, downloadUrl, generatedAt, rows]
+
+    # GOVERNANCE
+    Proposal:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        proposer: { type: string }
+        status: { type: string, enum: [active, passed, rejected, executed] }
+        votesFor: { type: integer }
+        votesAgainst: { type: integer }
+        quorum: { type: integer }
+        deadline: { type: string }
+        createdAt: { type: string }
+        userVote: { type: ["string", "null"] }
+      required: [id, title, description, proposer, status, votesFor, votesAgainst, quorum, deadline, createdAt]
+
+    ProposalInput:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        type: { type: string }
+        duration: { type: integer }
+      required: [title, description, type, duration]
+
+    VoteInput:
+      type: object
+      properties:
+        support: { type: boolean }
+        reason: { type: ["string", "null"] }
+      required: [support]
+
+    MultisigTx:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        toAddress: { type: string }
+        amount: { type: number }
+        currency: { type: string }
+        threshold: { type: integer }
+        signaturesCount: { type: integer }
+        signers: { type: array, items: { type: string } }
+        status: { type: string, enum: [pending, ready, executed, rejected] }
+        createdAt: { type: string }
+        userSigned: { type: boolean }
+      required: [id, title, toAddress, amount, currency, threshold, signaturesCount, signers, status, createdAt, userSigned]
+
+    MultisigTxInput:
+      type: object
+      properties:
+        title: { type: string }
+        toAddress: { type: string }
+        amount: { type: number }
+        currency: { type: string }
+        description: { type: ["string", "null"] }
+      required: [title, toAddress, amount, currency]
+
+    # ARC-FLOW
+    Invoice:
+      type: object
+      properties:
+        id: { type: string }
+        nftTokenId: { type: ["string", "null"] }
+        vendorAddress: { type: string }
+        vendorName: { type: string }
+        buyerAddress: { type: string }
+        buyerName: { type: string }
+        amount: { type: number }
+        currency: { type: string }
+        dueDate: { type: string }
+        status: { type: string, enum: [draft, minted, listed, funded, paid, overdue] }
+        description: { type: string }
+        discountRate: { type: number }
+        fundedAmount: { type: ["number", "null"] }
+        fundedBy: { type: ["string", "null"] }
+        createdAt: { type: string }
+      required: [id, vendorAddress, vendorName, buyerAddress, buyerName, amount, currency, dueDate, status, description, discountRate, createdAt]
+
+    InvoiceInput:
+      type: object
+      properties:
+        buyerAddress: { type: string }
+        buyerName: { type: string }
+        amount: { type: number }
+        currency: { type: string }
+        dueDate: { type: string }
+        description: { type: string }
+        discountRate: { type: number }
+      required: [buyerAddress, buyerName, amount, currency, dueDate, description, discountRate]
+
+    MarketplaceList:
+      type: object
+      properties:
+        invoices: { type: array, items: { $ref: "#/components/schemas/Invoice" } }
+        totalLiquidity: { type: number }
+        avgReturn: { type: number }
+        totalFunded: { type: integer }
+      required: [invoices, totalLiquidity, avgReturn, totalFunded]
+
+    FundInvoiceInput:
+      type: object
+      properties:
+        amount: { type: number }
+      required: [amount]
+
+    InvestorDashboard:
+      type: object
+      properties:
+        portfolioValue: { type: number }
+        totalReturn: { type: number }
+        returnRate: { type: number }
+        activeInvestments: { type: integer }
+        investments: { type: array, items: { $ref: "#/components/schemas/Invoice" } }
+        monthlyEarnings: { type: array, items: { type: object } }
+      required: [portfolioValue, totalReturn, returnRate, activeInvestments, investments, monthlyEarnings]
+
+    # AI
+    AIChatInput:
+      type: object
+      properties:
+        message: { type: string }
+        context: { type: ["string", "null"] }
+      required: [message]
+
+    AIChatResponse:
+      type: object
+      properties:
+        response: { type: string }
+        suggestions: { type: array, items: { type: string } }
+        insights: { type: array, items: { type: object } }
+      required: [response, suggestions, insights]
+
+    AIInsights:
+      type: object
+      properties:
+        spendingAlert: { type: ["string", "null"] }
+        savingSuggestion: { type: ["string", "null"] }
+        taxOptimization: { type: ["string", "null"] }
+        marketInsight: { type: ["string", "null"] }
+        riskScore: { type: integer }
+        weeklyTip: { type: string }
+      required: [riskScore, weeklyTip]
+
+    AgentSetupInput:
+      type: object
+      properties:
+        goal: { type: string }
+        riskTolerance: { type: string, enum: [conservative, moderate, aggressive] }
+        monthlyBudget: { type: number }
+        legalJurisdiction: { type: string }
+      required: [goal, riskTolerance, monthlyBudget, legalJurisdiction]
+
+    AutonomousAgent:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [active, paused, stopped] }
+        goal: { type: string }
+        riskTolerance: { type: string }
+        monthlyBudget: { type: number }
+        legalJurisdiction: { type: string }
+        lastAction: { type: ["string", "null"] }
+        nextScheduledAction: { type: ["string", "null"] }
+        totalSaved: { type: number }
+        totalOptimized: { type: number }
+      required: [id, status, goal, riskTolerance, monthlyBudget, legalJurisdiction, totalSaved, totalOptimized]
+
+    # VAULT
+    VaultGoal:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        targetAmount: { type: number }
+        currentAmount: { type: number }
+        currency: { type: string }
+        deadline: { type: ["string", "null"] }
+        autoSaveEnabled: { type: boolean }
+        autoSaveAmount: { type: ["number", "null"] }
+        type: { type: string, enum: [personal, family, emergency, investment] }
+        inflationProtected: { type: boolean }
+        createdAt: { type: string }
+      required: [id, name, targetAmount, currentAmount, currency, autoSaveEnabled, type, inflationProtected, createdAt]
+
+    VaultGoalInput:
+      type: object
+      properties:
+        name: { type: string }
+        targetAmount: { type: number }
+        currency: { type: string }
+        deadline: { type: ["string", "null"] }
+        autoSaveEnabled: { type: boolean }
+        autoSaveAmount: { type: ["number", "null"] }
+        type: { type: string }
+        inflationProtected: { type: boolean }
+      required: [name, targetAmount, currency, autoSaveEnabled, type, inflationProtected]
+
+    VaultDepositInput:
+      type: object
+      properties:
+        goalId: { type: string }
+        amount: { type: number }
+      required: [goalId, amount]
+
+    # POINTS
+    PointsBalance:
+      type: object
+      properties:
+        balance: { type: integer }
+        tier: { type: string, enum: [bronze, silver, gold, platinum, diamond] }
+        nextTierPoints: { type: integer }
+        multiplier: { type: number }
+        badges: { type: array, items: { type: string } }
+      required: [balance, tier, nextTierPoints, multiplier, badges]
+
+    PointsEvent:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string }
+        points: { type: integer }
+        description: { type: string }
+        timestamp: { type: string }
+      required: [id, type, points, description, timestamp]
+
+    RedeemPointsInput:
+      type: object
+      properties:
+        rewardId: { type: string }
+        pointsToRedeem: { type: integer }
+      required: [rewardId, pointsToRedeem]
+
+    # ADMIN
+    AdminAnalytics:
+      type: object
+      properties:
+        totalUsers: { type: integer }
+        activeUsers24h: { type: integer }
+        totalTransactions: { type: integer }
+        totalVolume: { type: number }
+        totalFees: { type: number }
+        topUsers: { type: array, items: { type: object } }
+        dailySignups: { type: array, items: { type: object } }
+        chainDistribution: { type: array, items: { type: object } }
+      required: [totalUsers, activeUsers24h, totalTransactions, totalVolume, totalFees, topUsers, dailySignups, chainDistribution]
+
+    OwnerWallet:
+      type: object
+      properties:
+        address: { type: string }
+        totalEarnings: { type: number }
+        feeRevenue: { type: number }
+        subscriptionRevenue: { type: number }
+        lastUpdated: { type: string }
+      required: [address, totalEarnings, feeRevenue, subscriptionRevenue, lastUpdated]
+
+    OwnerWalletUpdate:
+      type: object
+      properties:
+        address: { type: string }
+      required: [address]
+
+    # COMPLIANCE
+    ComplianceCheckInput:
+      type: object
+      properties:
+        address: { type: string }
+        chain: { type: string }
+      required: [address, chain]
+
+    ComplianceResult:
+      type: object
+      properties:
+        address: { type: string }
+        riskLevel: { type: string, enum: [low, medium, high, blocked] }
+        riskScore: { type: integer }
+        flags: { type: array, items: { type: string } }
+        sanctioned: { type: boolean }
+        amlPassed: { type: boolean }
+        checkedAt: { type: string }
+      required: [address, riskLevel, riskScore, flags, sanctioned, amlPassed, checkedAt]
+
+    KycStatus:
+      type: object
+      properties:
+        status: { type: string, enum: [not_started, pending, approved, rejected] }
+        level: { type: string, enum: [none, basic, enhanced, institutional] }
+        submittedAt: { type: ["string", "null"] }
+        approvedAt: { type: ["string", "null"] }
+        limits: { type: object }
+      required: [status, level, limits]
